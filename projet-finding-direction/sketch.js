@@ -7,21 +7,32 @@ class Point {
   }
 }
 
+var a;
+var b;
+
 var rectangle = [
   new Point(100, 150),
-  new Point(100, 400),
-  new Point(500, 400),
-  new Point(500, 150)
+  new Point(100, 600),
+  new Point(300, 600),
+  new Point(300, 150)
 ];
 
+var points = [];
 var ratio = 0;
 var iteration = 0;
 var rectangleExtremePoints;
+var rectangleCenter;
 
-/*var P = 10;
-var EPSILON = 0.1;*/
+var EPSILON = 0.2; //can be changed for precision
 var U = [];
 var V = [];
+
+var d;
+var f1;
+var f2;
+var q = new Point(0, 0);
+
+var validDirections = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -29,25 +40,28 @@ function setup() {
   // Put setup code here
   fill("black");
   textSize(40);
+
+  computeConstantValues();
+
   button = createButton("Clear");
   button.position(10, 35);
   button.mousePressed(resetpoints);
 
   button = createButton("1-1");
   button.position(10, 60);
-  button.mousePressed(setRatio1());
+  button.mousePressed(setRatio1);
 
   button = createButton("1-3");
-  button.position(50, 60);
-  button.mousePressed(setRatio3());
+  button.position(70, 60);
+  button.mousePressed(setRatio3);
 
   button = createButton("1-5");
-  button.position(90, 60);
-  button.mousePressed(setRatio5());
+  button.position(130, 60);
+  button.mousePressed(setRatio5);
 
   button = createButton("1-10");
-  button.position(130, 60);
-  button.mousePressed(setRatio10());
+  button.position(190, 60);
+  button.mousePressed(setRatio10);
 
   //for the purpose of testing, I always check the first drawed edge of the polygon
   button = createButton("Generate points");
@@ -56,26 +70,62 @@ function setup() {
 
   button = createButton("Show best directions");
   button.position(10, 110);
-  button.mousePressed();
+  button.mousePressed(showBestDirections);
+}
+
+function computeConstantValues() {
+  rectangleExtremePoints = getRectangleExtremes();
+
+  rectangleCenter = new Point(
+    Math.round(average(rectangleExtremePoints[0], rectangleExtremePoints[1])),
+    Math.round(average(rectangleExtremePoints[2], rectangleExtremePoints[3]))
+  );
+
+  a = rectangle[0];
+  b = rectangle[3];
+
+  d = new Point(rectangleCenter.x, rectangleExtremePoints[2]);
+  f1 = new Point(d.x + (b.x - d.x) * EPSILON, rectangleExtremePoints[2]);
+  f2 = new Point(d.x - (b.x - d.x) * EPSILON, rectangleExtremePoints[2]);
+}
+
+function average(x, y) {
+  return (x + y) / 2;
 }
 
 function setRatio1() {
-  ratio = 1;
+  setRatio(1);
 }
+
 function setRatio3() {
-  ratio = 3;
+  setRatio(3);
 }
+
 function setRatio5() {
-  ratio = 5;
+  setRatio(5);
 }
+
 function setRatio10() {
-  ratio = 10;
+  setRatio(10);
+}
+
+function setRatio(i) {
+  if (ratio === 0) {
+    ratio = i;
+    EPSILON = 1 / i;
+    computeConstantValues();
+  } else {
+    document.getElementById("my_res").innerHTML =
+      "Clear to choose a new ratio. The ratio is 1-" + ratio;
+  }
 }
 
 function resetpoints() {
   U = [];
   V = [];
+  validDirections = [];
   ratio = 0;
+  q = new Point(0, 0);
   document.getElementById("my_res").innerHTML =
     "Choose the ratio of points in one set compared with the other set";
 }
@@ -83,34 +133,45 @@ function resetpoints() {
 function draw() {
   background(200);
 
-  for (let corner = 0; corner < 5; corner++) {
-    ellipse(rectangle[corner].x, rectangle[corner].y, 4, 4);
-
-    line(
-      rectangle[corner].x,
-      rectangle[corner].y,
-      rectangle[(corner + 1) % 4].x,
-      rectangle[(corner + 1) % 4].y
-    );
-  }
-
-  //stroke("red");
+  stroke("red");
   for (i in U) {
     ellipse(U[i].x, U[i].y, 4, 4);
   }
-  //stroke("blue");
+  stroke("blue");
   for (i in V) {
     ellipse(V[i].x, V[i].y, 4, 4);
   }
-  //stroke("black");
+  stroke("black");
+
+  for (let corner = 0; corner < 3; corner++) {
+    ellipse(rectangle[corner].x, rectangle[corner].y, 4, 4);
+    line(
+      rectangle[corner].x,
+      rectangle[corner].y,
+      rectangle[corner + 1].x,
+      rectangle[corner + 1].y
+    );
+  }
+  ellipse(rectangle[3].x, rectangle[3].y, 4, 4);
+  line(rectangle[0].x, rectangle[0].y, rectangle[3].x, rectangle[3].y);
+
+  stroke("green");
+  ellipse(rectangleCenter.x, rectangleCenter.y, 4, 4);
+  ellipse(f1.x, f1.y, 4, 4);
+  ellipse(f2.x, f2.y, 4, 4);
+
+  for (let i = 0; i < validDirections.length - 1; i = i + 2) {
+    line(
+      validDirections[i].x,
+      validDirections[i].y,
+      validDirections[i + 1].x,
+      validDirections[i + 1].y
+    );
+  }
+  stroke("black");
 }
 
-function mousePressed() {
-  if (mouseX > 250 || mouseY > 100) {
-    points.push(new Point(mouseX, mouseY));
-  }
-  //document.getElementById("my_res").innerHTML = mouseX + " , " + mouseY;
-}
+function mousePressed() {}
 
 function isTurnRight(a, b, c) {
   det = b.x * c.y - a.x * c.y + a.x * b.y - b.y * c.x + a.y * c.x - a.y * b.x;
@@ -165,11 +226,10 @@ function createPointsForNewIteration() {
   if (ratio === 0) {
     document.getElementById("my_res").innerHTML = "First, choose a ratio";
   } else {
-    print(ratio);
     document.getElementById("my_res").innerHTML = "The ratio is 1-" + ratio;
   }
   iteration = iteration + 1;
-  rectangleExtremePoints = getRectangleExtremes();
+  //rectangleExtremePoints = getRectangleExtremes();
   U = U.concat(generateRandomPointsInside(1));
   V = V.concat(generateRandomPointsInside(ratio));
 }
@@ -200,6 +260,32 @@ function generateOneInsidePoint(minX, maxX, minY, maxY) {
     newPoint.x = x;
   }
   return newPoint;
+}
+
+function showBestDirections() {
+  for (let u = 0; u < U.length; u++) {
+    for (let v = 0; v < V.length; v++) {
+      if (isDirectionValid(U[u], V[v])) {
+        validDirections.push(U[u], V[v]);
+      }
+    }
+  }
+}
+
+function isDirectionValid(u, v) {
+  deltaY = Math.round((v.y - u.y) * 100) / 100;
+  deltaX = Math.round((v.x - u.x) * 100) / 100;
+  q = new Point(rectangleCenter.x + deltaX, rectangleCenter.y + deltaY);
+  return doesDirectionIntersectF1F2(q);
+}
+
+function doesDirectionIntersectF1F2(q) {
+  return (
+    (isTurnRight(rectangleCenter, q, f1) &&
+      !isTurnRight(rectangleCenter, q, f2)) ||
+    (!isTurnRight(rectangleCenter, q, f1) &&
+      isTurnRight(rectangleCenter, q, f2))
+  );
 }
 
 // This Redraws the Canvas when resized

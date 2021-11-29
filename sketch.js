@@ -7,32 +7,13 @@ class Point {
   }
 }
 
-var a;
-var b;
-
-var rectangle = [
-  new Point(100, 150),
-  new Point(100, 600),
-  new Point(300, 600),
-  new Point(300, 150)
-];
-
 var points = [];
-var ratio = 0;
-var iteration = 0;
-var rectangleExtremePoints;
-var rectangleCenter;
+var vertices = [];
 
-var EPSILON = 0.2; //can be changed for precision
+var P = 10;
+var EPSILON = 0.1;
 var U = [];
 var V = [];
-
-var d;
-var f1;
-var f2;
-var q = new Point(0, 0);
-
-var validDirections = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -40,99 +21,50 @@ function setup() {
   // Put setup code here
   fill("black");
   textSize(40);
-
-  computeConstantValues();
-
   button = createButton("Clear");
-  button.position(10, 35);
+  button.position(10, 75);
   button.mousePressed(resetpoints);
 
-  button = createButton("1-1");
-  button.position(10, 60);
-  button.mousePressed(setRatio1);
-
-  button = createButton("1-3");
-  button.position(70, 60);
-  button.mousePressed(setRatio3);
-
-  button = createButton("1-5");
-  button.position(130, 60);
-  button.mousePressed(setRatio5);
-
-  button = createButton("1-10");
-  button.position(190, 60);
-  button.mousePressed(setRatio10);
+  button = createButton("I finished my polygon construction");
+  button.position(10, 95);
+  button.mousePressed(convexhull);
 
   //for the purpose of testing, I always check the first drawed edge of the polygon
-  button = createButton("Generate points");
-  button.position(10, 85);
-  button.mousePressed(createPointsForNewIteration);
+  button = createButton("Find the largest rectangle");
+  button.position(10, 115);
+  button.mousePressed(searchLargestRectangle);
 
-  button = createButton("Show best directions");
-  button.position(10, 110);
-  button.mousePressed(showBestDirections);
-}
+  button = createButton("See report");
+  button.position(10, 135);
+  button.mousePressed(() => window.open("https://elinesoetens.github.io/testProjetGeom/Preliminary_Project_Gullentops_Soetens.pdf"));
 
-function computeConstantValues() {
-  rectangleExtremePoints = getRectangleExtremes();
-
-  rectangleCenter = new Point(
-    Math.round(average(rectangleExtremePoints[0], rectangleExtremePoints[1])),
-    Math.round(average(rectangleExtremePoints[2], rectangleExtremePoints[3]))
-  );
-
-  a = rectangle[0];
-  b = rectangle[3];
-
-  d = new Point(rectangleCenter.x, rectangleExtremePoints[2]);
-  f1 = new Point(d.x + (b.x - d.x) * EPSILON, rectangleExtremePoints[2]);
-  f2 = new Point(d.x - (b.x - d.x) * EPSILON, rectangleExtremePoints[2]);
-}
-
-function average(x, y) {
-  return (x + y) / 2;
-}
-
-function setRatio1() {
-  setRatio(1);
-}
-
-function setRatio3() {
-  setRatio(3);
-}
-
-function setRatio5() {
-  setRatio(5);
-}
-
-function setRatio10() {
-  setRatio(10);
-}
-
-function setRatio(i) {
-  if (ratio === 0) {
-    ratio = i;
-    EPSILON = 1 / i;
-    computeConstantValues();
-  } else {
-    document.getElementById("my_res").innerHTML =
-      "Clear to choose a new ratio. The ratio is 1-" + ratio;
-  }
 }
 
 function resetpoints() {
+  points = [];
+  vertices = [];
   U = [];
   V = [];
-  validDirections = [];
-  ratio = 0;
-  q = new Point(0, 0);
-  document.getElementById("my_res").innerHTML =
-    "Choose the ratio of points in one set compared with the other set";
+  document.getElementById("my_res").innerHTML = "Draw a set of points";
 }
 
 function draw() {
   background(200);
+  for (i in points) {
+    ellipse(points[i].x, points[i].y, 4, 4);
+  }
 
+  if (vertices.length !== 0) {
+    line(
+      vertices[0].x,
+      vertices[0].y,
+      vertices[vertices.length - 1].x,
+      vertices[vertices.length - 1].y
+    );
+    for (let i = 0; i < vertices.length - 1; i = i + 1) {
+      line(vertices[i].x, vertices[i].y, vertices[i + 1].x, vertices[i + 1].y);
+    }
+  }
   stroke("red");
   for (i in U) {
     ellipse(U[i].x, U[i].y, 4, 4);
@@ -142,36 +74,55 @@ function draw() {
     ellipse(V[i].x, V[i].y, 4, 4);
   }
   stroke("black");
-
-  for (let corner = 0; corner < 3; corner++) {
-    ellipse(rectangle[corner].x, rectangle[corner].y, 4, 4);
-    line(
-      rectangle[corner].x,
-      rectangle[corner].y,
-      rectangle[corner + 1].x,
-      rectangle[corner + 1].y
-    );
-  }
-  ellipse(rectangle[3].x, rectangle[3].y, 4, 4);
-  line(rectangle[0].x, rectangle[0].y, rectangle[3].x, rectangle[3].y);
-
-  stroke("green");
-  ellipse(rectangleCenter.x, rectangleCenter.y, 4, 4);
-  ellipse(f1.x, f1.y, 4, 4);
-  ellipse(f2.x, f2.y, 4, 4);
-
-  for (let i = 0; i < validDirections.length - 1; i = i + 2) {
-    line(
-      validDirections[i].x,
-      validDirections[i].y,
-      validDirections[i + 1].x,
-      validDirections[i + 1].y
-    );
-  }
-  stroke("black");
 }
 
-function mousePressed() {}
+function mousePressed() {
+  if (mouseX > 250 || mouseY > 100) {
+    points.push(new Point(mouseX, mouseY));
+  }
+  //document.getElementById("my_res").innerHTML = mouseX + " , " + mouseY;
+}
+
+function convexhull() {
+  //use graham scan to find the convex hull
+
+  //first step is finding x min
+  let min_i = 0;
+  let min = points[0].x;
+  for (i in points) {
+    if (points[i].x <= min) {
+      min_i = i;
+    }
+  }
+  let point_min = points.splice(min_i, 1)[0];
+
+  //order all points radially
+  points = [point_min, ...points.slice(0)];
+  let sorted_points = points.slice(1);
+  sorted_points.sort(compare);
+  points = [point_min, ...sorted_points.slice(0)];
+
+  vertices = [points[0], points[1]];
+
+  for (let i = 2; i < points.length; i = i + 1) {
+    let l = vertices.length;
+    while (isTurnRight(vertices[l - 2], vertices[l - 1], points[i])) {
+      vertices.pop();
+      l = vertices.length;
+    }
+    vertices.push(points[i]);
+  }
+  //console.log(vertices);
+  points = JSON.parse(JSON.stringify(vertices));
+}
+
+function compare(b, c) {
+  if (isTurnRight(points[0], b, c)) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
 
 function isTurnRight(a, b, c) {
   det = b.x * c.y - a.x * c.y + a.x * b.y - b.y * c.x + a.y * c.x - a.y * b.x;
@@ -182,19 +133,17 @@ function isTurnRight(a, b, c) {
   }
 }
 
-function isInside(a, b, c, d, q) {
+function isInside(a, b, c, q) {
   if (
-    isTurnRight(a, b, q) &&
-    isTurnRight(b, c, q) &&
-    isTurnRight(c, d, q) &&
-    isTurnRight(d, a, q)
+    isTurnRight(a, b, q, false) &&
+    isTurnRight(b, c, q, false) &&
+    isTurnRight(c, a, q, false)
   ) {
     return true;
   } else if (
-    !isTurnRight(a, b, q) &&
-    !isTurnRight(b, c, q) &&
-    !isTurnRight(c, d, q) &&
-    !isTurnRight(d, a, q)
+    !isTurnRight(a, b, q, false) &&
+    !isTurnRight(b, c, q, false) &&
+    !isTurnRight(c, a, q, false)
   ) {
     return true;
   } else {
@@ -202,49 +151,82 @@ function isInside(a, b, c, d, q) {
   }
 }
 
-function getRectangleExtremes() {
-  maxY = 0;
-  minY = 1000;
-  maxX = 0;
-  minX = 1000;
-  for (point in rectangle) {
-    if (rectangle[point].x > maxX) {
-      maxX = rectangle[point].x;
-    } else if (rectangle[point].x < minX) {
-      minX = rectangle[point].x;
-    }
-    if (rectangle[point].y > maxY) {
-      maxY = rectangle[point].y;
-    } else if (rectangle[point].y < minY) {
-      minY = rectangle[point].y;
-    }
-  }
-  return [minX, maxX, minY, maxY];
+function isInsideConvexHull(queryPoint) {
+  //find the last right turn between the first point, the unknown one and the one we are checking
+  limiteIndex = pointsBinarySearch(fct, queryPoint);
+  //check if the point is inside the triangle
+  return isInside(
+    points[0],
+    points[limiteIndex],
+    points[limiteIndex + 1],
+    queryPoint
+  );
 }
 
-function createPointsForNewIteration() {
-  if (ratio === 0) {
-    document.getElementById("my_res").innerHTML = "First, choose a ratio";
-  } else {
-    document.getElementById("my_res").innerHTML = "The ratio is 1-" + ratio;
+function pointsBinarySearch(f, queryPoint) {
+  let i;
+  let u = vertices.length;
+  let l = 0;
+  let flag = true;
+  while (flag) {
+    i = int((l + u) / 2);
+    if (i === vertices.length - 1) {
+      return i;
+    }
+    if (f(i, queryPoint) === false) {
+      u = i;
+      //i = int(arr.length / 2);
+    } else if (f(i + 1, queryPoint) === true) {
+      l = i;
+      //i = int(arr.length / 2);
+    } else {
+      return i;
+    }
+    if (l === u) {
+      return i;
+    }
   }
-  iteration = iteration + 1;
-  //rectangleExtremePoints = getRectangleExtremes();
-  U = U.concat(generateRandomPointsInside(1));
-  V = V.concat(generateRandomPointsInside(ratio));
+}
+
+function fct(i, qP) {
+  return !isTurnRight(points[0], points[i], qP);
+}
+
+function searchLargestRectangle() {
+  computeLargestRectangleUV();
+  /*U = generateRandomPointsInside(P);
+  V = generateRandomPointsInside(Math.floor(P / EPSILON));
+  Rapx = 0;
+  consol.log("yo");
+  for (u in U) {
+    for (v in V) {
+      newRapx = computeLargestRectangleUV(U[u], V[v]);
+      if (newRapx > Rapx) {
+        Rapx = newRapx;
+      }
+    }
+  }*/
 }
 
 function generateRandomPointsInside(numberOfPointsNeeded) {
   pointsList = [];
+  maxY = 0;
+  minY = 1000;
+  maxX = 0;
+  minX = points[0].x;
+  for (let i = 0; i < points.length; i = i + 1) {
+    if (points[i].x > maxX) {
+      maxX = points[i].x;
+    }
+    if (points[i].y > maxY) {
+      maxY = points[i].y;
+    }
+    if (points[i].y < minY) {
+      minY = points[i].y;
+    }
+  }
   while (pointsList.length < numberOfPointsNeeded) {
-    pointsList.push(
-      generateOneInsidePoint(
-        rectangleExtremePoints[0],
-        rectangleExtremePoints[1],
-        rectangleExtremePoints[2],
-        rectangleExtremePoints[3]
-      )
-    );
+    pointsList.push(generateOneInsidePoint(minX, maxX, minY, maxY));
   }
   return pointsList;
 }
@@ -253,38 +235,16 @@ function generateOneInsidePoint(minX, maxX, minY, maxY) {
   y = Math.random() * (maxY - minY) + minY;
   x = Math.random() * (maxX - minX) + minX;
   newPoint = new Point(x, y);
-  while (
-    !isInside(rectangle[0], rectangle[1], rectangle[2], rectangle[3], newPoint)
-  ) {
+  while (!isInsideConvexHull(newPoint)) {
     x = Math.random() * (maxX - minX) + minX;
     newPoint.x = x;
   }
   return newPoint;
 }
 
-function showBestDirections() {
-  for (let u = 0; u < U.length; u++) {
-    for (let v = 0; v < V.length; v++) {
-      if (isDirectionValid(U[u], V[v])) {
-        validDirections.push(U[u], V[v]);
-      }
-    }
-  }
-}
-
-function isDirectionValid(u, v) {
-  deltaY = Math.round((v.y - u.y) * 100) / 100;
-  deltaX = Math.round((v.x - u.x) * 100) / 100;
-  q = new Point(rectangleCenter.x + deltaX, rectangleCenter.y + deltaY);
-  return doesDirectionIntersectF1F2(q);
-}
-
-function doesDirectionIntersectF1F2(q) {
-  return (
-    (isTurnRight(rectangleCenter, q, f1) &&
-      !isTurnRight(rectangleCenter, q, f2)) ||
-    (!isTurnRight(rectangleCenter, q, f1) &&
-      isTurnRight(rectangleCenter, q, f2))
+function computeLargestRectangleUV() {
+  console.log(
+    Math.atan((points[1].y - points[0].y) / (points[1].x - points[0].x))
   );
 }
 

@@ -22,17 +22,21 @@ function setup() {
   fill("black");
   textSize(40);
   button = createButton("Clear");
-  button.position(10, 35);
+  button.position(10, 75);
   button.mousePressed(resetpoints);
 
   button = createButton("I finished my polygon construction");
-  button.position(10, 55);
+  button.position(10, 95);
   button.mousePressed(convexhull);
 
   //for the purpose of testing, I always check the first drawed edge of the polygon
   button = createButton("Find the largest rectangle");
-  button.position(10, 75);
+  button.position(10, 115);
   button.mousePressed(searchLargestRectangle);
+
+  button = createButton("See report");
+  button.position(10, 135);
+  button.mousePressed(() => window.open("https://elinesoetens.github.io/BiggestAreaRectangle/BiggestAreaRectangle.pdf"));
 }
 
 function resetpoints() {

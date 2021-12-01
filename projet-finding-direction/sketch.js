@@ -44,32 +44,32 @@ function setup() {
   computeConstantValues();
 
   button = createButton("Clear");
-  button.position(10, 75);
+  button.position(10, 85);
   button.mousePressed(resetpoints);
 
   button = createButton("1-1");
-  button.position(10, 95);
+  button.position(10, 110);
   button.mousePressed(setRatio1);
 
   button = createButton("1-3");
-  button.position(50, 95);
+  button.position(50, 110);
   button.mousePressed(setRatio3);
 
   button = createButton("1-5");
-  button.position(90, 95);
+  button.position(90, 110);
   button.mousePressed(setRatio5);
 
   button = createButton("1-10");
-  button.position(130, 95);
+  button.position(130, 110);
   button.mousePressed(setRatio10);
 
   //for the purpose of testing, I always check the first drawed edge of the polygon
   button = createButton("Generate points");
-  button.position(10, 115);
+  button.position(10, 135);
   button.mousePressed(createPointsForNewIteration);
 
   button = createButton("Show best directions");
-  button.position(10, 135);
+  button.position(10, 160);
   button.mousePressed(showBestDirections);
 }
 

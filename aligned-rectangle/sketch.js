@@ -28,11 +28,11 @@ function setup() {
   fill("black");
   textSize(40);
   button = createButton("Clear");
-  button.position(10, 75);
+  button.position(10, 85);
   button.mousePressed(resetpoints);
 
   button = createButton("I finished my polygon construction");
-  button.position(10, 100);
+  button.position(10, 105);
   button.mousePressed(convexhull);
 
   //for the purpose of testing, I always check the first drawed edge of the polygon

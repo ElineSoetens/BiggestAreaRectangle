@@ -28,7 +28,7 @@ function setup() {
   fill("black");
   textSize(40);
   button = createButton("Clear");
-  button.position(10, 85);
+  button.position(10, 80);
   button.mousePressed(resetpoints);
 
   button = createButton("I finished my polygon construction");

@@ -72,11 +72,19 @@ function draw() {
     }
   }
 
+  stroke("green");
   if (array_r.length !== 0) {
-    noFill();
-    rect(array_r[0], array_r[1], array_r[2], array_r[3]);
-    fill("black");
+    line(
+      array_r[0].x,
+      array_r[0].y,
+      array_r[array_r.length - 1].x,
+      array_r[array_r.length - 1].y
+    );
+    for (let i = 0; i < array_r.length - 1; i = i + 1) {
+      line(array_r[i].x, array_r[i].y, array_r[i + 1].x, array_r[i + 1].y);
+    }
   }
+  stroke("black")
 
   
   /*
@@ -135,6 +143,27 @@ function convexhull() {
   points = JSON.parse(JSON.stringify(vertices));
   //console.log(points);
   //console.log(vertices);
+}
+
+function getPolygonExtremes(listePoints) {
+  var maxY = 0;
+  var minY = 0;
+  var maxX = 0;
+  var minX = 0;
+
+  for (p in listePoints) {
+    if (listePoints[p].x > listePoints[maxX].x) {
+      maxX = p;
+    } else if (listePoints[p].x < listePoints[minX].x) {
+      minX = p;
+    }
+    if (listePoints[p].y > listePoints[maxY].y) {
+      maxY = p;
+    } else if (listePoints[p].y < listePoints[minY].y) {
+      minY = p;
+    }
+  }
+  return [int(minX), int(maxX), int(minY), int(maxY)]; //CAUTION : those are the indexes
 }
 
 function compare(b, c) {
@@ -196,10 +225,10 @@ function pointsBinarySearch(f, queryPoint) {
     }
     if (f(i, queryPoint) === false) {
       u = i;
-      //i = int(arr.length / 2);
+      
     } else if (f(i + 1, queryPoint) === true) {
       l = i;
-      //i = int(arr.length / 2);
+      
     } else {
       return i;
     }
@@ -228,10 +257,8 @@ function BS_region(f, val, region) {
     }
     if (f(i, val, region) === false) {
       u = i;
-      //i = int(arr.length / 2);
     } else if (f(i + 1, val, region) === true) {
       l = i;
-      //i = int(arr.length / 2);
     } else {
       return i;
     }
@@ -241,15 +268,16 @@ function BS_region(f, val, region) {
   }
 }
 
+/* Function used to do binary search on 
+regions (SW, SE, NW, NE) of the polygon*/
 function BS_edges(f, region, reg_name) {
-  //CAREFULL POSSIBLE BUG IF REGION HAS ONLY 2 POINTS
   let i;
   let u = region.length;
   let l = 0;
   let flag = true;
   while (flag) {
     i = int((l + u) / 2);
-    console.log("i", i);
+
     if (i === region.length - 1) {
       return i;
     }
@@ -257,10 +285,8 @@ function BS_edges(f, region, reg_name) {
     area2 = f(region[i + 1].x, reg_name);
     if (area1 < area2) {
       u = i;
-      //i = int(arr.length / 2);
     } else if (area1 > area2) {
       l = i;
-      //i = int(arr.length / 2);
     } else {
       return i;
     }
@@ -296,22 +322,16 @@ function BS_xMaxArea(f, region, reg_name, x_min, x_max) {
   while (flag && counter < 10) {
     counter = counter + 1;
     i = int((l + u) / 2);
-    //console.log("i & counter", i, counter);
     area1 = f(i, reg_name);
-    //console.log("area1", area1);
     area2 = f(i + 1, reg_name);
 
-    //console.log("area2", area2);
     if (int(area1) > int(area2)) {
       u = i;
-      //i = int(arr.length / 2);
     } else if (int(area1) < int(area2)) {
       l = i;
-      //i = int(arr.length / 2);
     } else {
       return i;
     }
-    //console.log("l & u", l, u);
     if (l === u || l + 1 === u) {
       return i;
     }
@@ -319,61 +339,61 @@ function BS_xMaxArea(f, region, reg_name, x_min, x_max) {
 }
 
 function searchLargestRectangle() {
-  //3pts on boundary version
-  //1st separate the region
-  maxY = points[0].y;
-  i_maxY = 0;
-  minY = points[0].y;
-  i_minY = 0;
-  maxX = points[0].x;
-  i_maxX = 0;
-  minX = points[0].x;
-  i_minX = 0;
-  for (let i = 0; i < points.length; i = i + 1) {
-    if (points[i].x > maxX) {
-      maxX = points[i].x;
-      i_maxX = int(i);
-    }
-    if (points[i].y > maxY) {
-      maxY = points[i].y;
-      i_maxY = int(i);
-    }
-    if (points[i].x < minX) {
-      console.log("case");
-      minX = points[i].x;
-      i_minX = int(i);
-    }
-    if (points[i].y < minY) {
-      minY = points[i].y;
-      i_minY = int(i);
-    }
-  }
+  array_minmax = getPolygonExtremes(points);
+  i_minX = array_minmax[0];
+  i_maxX = array_minmax[1];
+  i_minY = array_minmax[2];
+  i_maxY = array_minmax[3];
 
-  SW = points.slice(i_minX, (i_maxY + 1) % points.length);
-  SE = points.slice(i_maxY, (i_maxX + 1) % points.length);
-  if (i_minY === points.length - 1) {
+  l_points = points.length;
+  console.log(i_minX,i_maxY,i_maxX,i_minY)
+
+  //SW
+  if (i_minX < i_maxY) {
+    SW = points.slice(i_minX, i_maxY);
+  } else if (i_minX > i_maxY){
+    SW = points.slice(i_minX);
+    SW = SW.concat(points.slice(0, i_maxY));
+  }
+  SW.push(points[i_maxY % l_points]);
+
+  //SE
+  if (i_maxY < i_maxX) {
+    SE = points.slice(i_maxY, i_maxX);
+  } else if (i_maxY > i_maxX) {
+    SE = points.slice(i_maxY);
+    SE = SE.concat(points.slice(0, i_maxX));
+  }
+  SE.push(points[i_maxX % l_points]);
+
+  //NE
+  if (i_maxX < i_minY) {
+    NE = points.slice(i_maxX, i_minY);
+  } else if (i_maxX > i_minY) {
     NE = points.slice(i_maxX);
-  } else {
-    NE = points.slice(i_maxX, (i_minY + 1) % points.length);
+    NE = NE.concat(points.slice(0, i_minY));
   }
+  NE.push(points[i_minY % l_points]);
 
-  NW = points.slice(i_minY);
-  NW.push(points[i_minX]);
+  //NW
+  if (i_minY < i_minX) {
+    NW = points.slice(i_minY, i_minX);
+  } else if (i_minY > i_minX) {
+    NW = points.slice(i_minY);
+    NW = NW.concat(points.slice(0, i_minX));
+  }
+  NW.push(points[i_minX % l_points]);
 
-  //have a function to find area of rectangle
-  //given a x and the region where the point is
-  //console.log((SE[1].x + SE[0].x) / 2);
-  /*for (p in SW) {
-    a = AreaofRectanglefromXandRegion(SW[p].x, "SW");
-    console.log("area at", p, "is", a);
-  }*/
+  console.log("region- SW",SW);
+  console.log("region- NW",NW);
+  console.log("region- SE",SE);
+  console.log("region- NE",NE);
+  
   //For SW
   x_min_w = SW[0].x;
   x_max_w = Math.min(SW[SW.length - 1].x, NW[0].x);
-  console.log(x_min_w, x_max_w);
   x_min_e = Math.max(NE[NE.length - 1].x, SE[0].x);
   x_max_e = NE[0].x;
-  console.log(x_min_e, x_max_e);
 
   sol_w = BS_xMaxArea(
     AreaofRectanglefromXandRegion,
@@ -382,11 +402,9 @@ function searchLargestRectangle() {
     x_min_w,
     x_max_w
   );
-  console.log("sol_w", sol_w);
+  
   west_solution = AreaofRectanglefromXandRegion(sol_w, "SW");
-  console.log("west sol");
-  console.log(west_solution);
-  //console.log("area", area_w);
+  
 
   sol_e = BS_xMaxArea(
     AreaofRectanglefromXandRegion,
@@ -395,20 +413,20 @@ function searchLargestRectangle() {
     x_min_e,
     x_max_e
   );
-  east_sol = AreaofRectanglefromXandRegion(sol_e, "SE");
-  console.log("sol SE & area", sol_e, east_sol);
+  east_solution = AreaofRectanglefromXandRegion(sol_e, "SE");
 
-  if (west_solution > east_sol) {
+  if (west_solution > east_solution) {
     max_areaX = sol_w;
-    res = AreaofRectanglefromXandRegion(sol_w, "SW");
-    max_area = res[0];
-    test_array = res[1];
-    console.log(test_array);
+    max_reg = "SW";
   } else {
     max_areaX = sol_e;
-    max_area = east_sol;
+    max_reg = "SE";
   }
-  console.log("Max area is : ", max_area);
+  res = AreaofRectanglefromXandRegion(max_areaX, max_reg, true);
+  max_area = res[0];
+  max_rectangle = res[1];
+  array_r = max_rectangle;
+  return [max_area, max_rectangle];
 }
 
 function AreaofRectanglefromXandRegion(x, region, verbose = true) {
@@ -450,7 +468,12 @@ function AreaofRectanglefromXandRegion(x, region, verbose = true) {
     u = Math.min(u1, u2);
 
     area = Math.abs((u - x) * (y2 - y1));
-    array_r = [x, y2, u - x, y1 - y2];
+    array_rect = [
+      new Point(x, y1),
+      new Point(x, y2),
+      new Point(u, y2),
+      new Point(u, y1)
+    ];
   }
   if (region === "SE" || region === "NE") {
     v1 = BS_region(x_south, x, SE);
@@ -466,10 +489,15 @@ function AreaofRectanglefromXandRegion(x, region, verbose = true) {
     u = Math.max(u1, u2);
 
     area = Math.abs((x - u) * (y2 - y1));
-    array_r = [u, y2, x - u, y1 - y2];
+    array_rect = [
+      new Point(x, y1),
+      new Point(x, y2),
+      new Point(u, y2),
+      new Point(u, y1)
+    ];
   }
   if (verbose) {
-    return [area, array_r];
+    return [area, array_rect];
   }
   return area;
 }

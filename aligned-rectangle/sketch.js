@@ -35,9 +35,8 @@ function setup() {
   button.position(10, 105);
   button.mousePressed(convexhull);
 
-  //for the purpose of testing, I always check the first drawed edge of the polygon
   button = createButton("Find the largest rectangle");
-  button.position(10, 125);
+  button.position(10, 130);
   button.mousePressed(searchLargestRectangle);
 }
 

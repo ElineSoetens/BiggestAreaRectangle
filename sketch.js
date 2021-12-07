@@ -16,7 +16,8 @@ var NE = [];
 var NW = [];
 var array_r = [];
 
-var EPSILON = 0.5; //TODO: if time, let the user choose
+var NRPOINTS = 10;
+var EPSILON = 0.1; //TODO: if time, let the user choose
 var U = [];
 var V = [];
 var possibleDirections = [];
@@ -83,48 +84,19 @@ function draw() {
       line(vertices[i].x, vertices[i].y, vertices[i + 1].x, vertices[i + 1].y);
     }
   }
-  stroke("red");
-  for (i in U) {
-    ellipse(U[i].x, U[i].y, 4, 4);
-  }
-  stroke("blue");
-  for (i in V) {
-    ellipse(V[i].x, V[i].y, 4, 4);
-  }
-
-  //draw sector (SW,SE,NW,NE)
-  if (SW.length !== 0) {
-    stroke("green");
-    for (p in SW) {
-      ellipse(SW[p].x, SW[p].y, 16, 16);
-    }
-    stroke("red");
-    for (p in SE) {
-      ellipse(SE[p].x, SE[p].y, 13, 13);
-    }
-    stroke("pink");
-    for (p in NE) {
-      ellipse(NE[p].x, NE[p].y, 10, 10);
-    }
-    stroke("blue");
-    for (p in NW) {
-      ellipse(NW[p].x, NW[p].y, 8, 8);
-    }
-    stroke("black");
-  }
 
   stroke("green");
-  /*for (let corner = 0; corner < 3; corner++) {
-    ellipse(array_r[corner].x, array_r[corner].y, 4, 4);
+  if (array_r.length !== 0) {
     line(
-      array_r[corner].x,
-      array_r[corner].y,
-      array_r[corner + 1].x,
-      array_r[corner + 1].y
+      array_r[0].x,
+      array_r[0].y,
+      array_r[array_r.length - 1].x,
+      array_r[array_r.length - 1].y
     );
+    for (let i = 0; i < array_r.length - 1; i = i + 1) {
+      line(array_r[i].x, array_r[i].y, array_r[i + 1].x, array_r[i + 1].y);
+    }
   }
-  ellipse(array_r[3].x, array_r[3].y, 4, 4);
-  line(array_r[0].x, array_r[0].y, array_r[3].x, array_r[3].y);*/
 
   if (array_r.length > 0) {
     for (v in array_r) {
@@ -193,7 +165,7 @@ function getPolygonExtremes(listePoints) {
       minY = p;
     }
   }
-  return [int(minX), int(maxX), int(minY), int(maxY)]; //those are the indexes
+  return [int(minX), int(maxX), int(minY), int(maxY)]; //CAUTION : those are the indexes
 }
 
 /*FINDING DIRECTIONS*/
@@ -208,7 +180,7 @@ function computePossibleDirections() {
 }
 
 function createPointsInsidePolygon() {
-  U = U.concat(generateRandomPointsInside(1));
+  U = U.concat(generateRandomPointsInside(NRPOINTS)); //todo: see what's the problem
   V = V.concat(generateRandomPointsInside(1 / EPSILON));
 }
 
@@ -247,38 +219,50 @@ function isInsideConvexHull(queryPoint) {
   );
 }
 
+function isInside(a, b, c, q) {
+  if (
+    isTurnRight(a, b, q, false) &&
+    isTurnRight(b, c, q, false) &&
+    isTurnRight(c, a, q, false)
+  ) {
+    return true;
+  } else if (
+    !isTurnRight(a, b, q, false) &&
+    !isTurnRight(b, c, q, false) &&
+    !isTurnRight(c, a, q, false)
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /*ROTATION*/
 
 function rotatePoints(u, v, backForth, rectangle = undefined) {
   //if backForth = 1, normal. if =-1, back rotation
   theta = Math.atan((v.y - u.y) / (v.x - u.x));
-  tx = vertices[0].x;
-  ty = vertices[0].y;
-  for (p in points) {
-    ancienX = points[p].x;
-    ancienY = points[p].y;
-    points[p].x =
+  maxmin = getPolygonExtremes(vertices);
+  tx = (vertices[maxmin[0]].x + vertices[maxmin[1]].x) / 2;
+  ty = (vertices[maxmin[2]].y + vertices[maxmin[3]].y) / 2;
+  actualRotation(tx, ty, theta, backForth, points);
+  if (rectangle !== undefined && backForth === -1) {
+    actualRotation(tx, ty, theta, backForth, rectangle);
+  }
+}
+
+function actualRotation(tx, ty, theta, backForth, liste) {
+  for (p in liste) {
+    ancienX = liste[p].x;
+    ancienY = liste[p].y;
+    liste[p].x =
       (ancienX - tx) * Math.cos(backForth * theta) +
       (ancienY - ty) * Math.sin(backForth * theta) +
       tx;
-    points[p].y =
+    liste[p].y =
       -(ancienX - tx) * Math.sin(backForth * theta) +
       (ancienY - ty) * Math.cos(backForth * theta) +
       ty;
-  }
-  if (rectangle !== undefined && backForth === -1) {
-    for (r in rectangle) {
-      ancienX = rectangle[r].x;
-      ancienY = rectangle[r].y;
-      rectangle[r].x =
-        (ancienX - tx) * Math.cos(backForth * theta) +
-        (ancienY - ty) * Math.sin(backForth * theta) +
-        tx;
-      rectangle[r].y =
-        -(ancienX - tx) * Math.sin(backForth * theta) +
-        (ancienY - ty) * Math.cos(backForth * theta) +
-        ty;
-    }
   }
 }
 
@@ -295,24 +279,6 @@ function compare(b, c) {
 function isTurnRight(a, b, c) {
   det = b.x * c.y - a.x * c.y + a.x * b.y - b.y * c.x + a.y * c.x - a.y * b.x;
   if (det > 0) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-function isInside(a, b, c, q) {
-  if (
-    isTurnRight(a, b, q, false) &&
-    isTurnRight(b, c, q, false) &&
-    isTurnRight(c, a, q, false)
-  ) {
-    return true;
-  } else if (
-    !isTurnRight(a, b, q, false) &&
-    !isTurnRight(b, c, q, false) &&
-    !isTurnRight(c, a, q, false)
-  ) {
     return true;
   } else {
     return false;
@@ -381,7 +347,7 @@ function BS_edges(f, region, reg_name) {
   let flag = true;
   while (flag) {
     i = int((l + u) / 2);
-    console.log("i", i);
+
     if (i === region.length - 1) {
       return i;
     }
@@ -425,9 +391,11 @@ function BS_xMaxArea(f, region, reg_name, x_min, x_max) {
   while (flag && counter < 10) {
     counter = counter + 1;
     i = int((l + u) / 2);
+    //console.log("BS_xMA-i & reg_name", i, " ", reg_name);
     area1 = f(i, reg_name);
     area2 = f(i + 1, reg_name);
-
+    //console.log("BS-XMA-area1 :", area1);
+    //console.log("BS-XMA-area2 :", area2);
     if (int(area1) > int(area2)) {
       u = i;
     } else if (int(area1) < int(area2)) {
@@ -452,36 +420,40 @@ function searchLargestRectangle() {
   l_points = points.length;
 
   //SW
+  SW = [];
   if (i_minX < i_maxY) {
     SW = points.slice(i_minX, i_maxY);
-  } else {
+  } else if (i_minX > i_maxY) {
     SW = points.slice(i_minX);
     SW = SW.concat(points.slice(0, i_maxY));
   }
   SW.push(points[i_maxY % l_points]);
 
   //SE
+  SE = [];
   if (i_maxY < i_maxX) {
     SE = points.slice(i_maxY, i_maxX);
-  } else {
+  } else if (i_maxY > i_maxX) {
     SE = points.slice(i_maxY);
     SE = SE.concat(points.slice(0, i_maxX));
   }
   SE.push(points[i_maxX % l_points]);
 
   //NE
+  NE = [];
   if (i_maxX < i_minY) {
     NE = points.slice(i_maxX, i_minY);
-  } else {
+  } else if (i_maxX > i_minY) {
     NE = points.slice(i_maxX);
     NE = NE.concat(points.slice(0, i_minY));
   }
   NE.push(points[i_minY % l_points]);
 
   //NW
+  NW = [];
   if (i_minY < i_minX) {
     NW = points.slice(i_minY, i_minX);
-  } else {
+  } else if (i_minY > i_minX) {
     NW = points.slice(i_minY);
     NW = NW.concat(points.slice(0, i_minX));
   }
@@ -492,38 +464,74 @@ function searchLargestRectangle() {
   x_min_e = Math.max(NE[NE.length - 1].x, SE[0].x);
   x_max_e = NE[0].x;
 
-  sol_w = BS_xMaxArea(
-    AreaofRectanglefromXandRegion,
-    SW,
-    "SW",
-    x_min_w,
-    x_max_w
-  );
+  if (SW.length === 1 || NW.length === 1) {
+    sol_w = undefined;
+    west_solution = 0;
 
-  west_solution = AreaofRectanglefromXandRegion(sol_w, "SW");
-
-  sol_e = BS_xMaxArea(
-    AreaofRectanglefromXandRegion,
-    SE,
-    "SE",
-    x_min_e,
-    x_max_e
-  );
-  east_solution = AreaofRectanglefromXandRegion(sol_e, "SE");
-
-  if (west_solution > east_solution) {
-    max_areaX = sol_w;
-    max_reg = "SW";
   } else {
-    max_areaX = sol_e;
-    max_reg = "SE";
+    try{
+      sol_w = BS_xMaxArea(
+        AreaofRectanglefromXandRegion,
+        SW,
+        "SW",
+        x_min_w,
+        x_max_w
+      );
+      west_solution = AreaofRectanglefromXandRegion(sol_w, "SW");
+    }
+    catch (error){
+      sol_w = undefined;
+      west_solution = 0;
+      console.error("west error");
+    }
+    
+    if (west_solution === NaN){
+      west_solution = 0;
+    }
   }
 
-  res = AreaofRectanglefromXandRegion(max_areaX, max_reg, true);
+  if (SE.length === 1 || NE.length === 1) {
+    sol_e = undefined;
+    east_solution = 0;
+  } else {
+    try{
+      sol_e = BS_xMaxArea(
+        AreaofRectanglefromXandRegion,
+        SE,
+        "SE",
+        x_min_e,
+        x_max_e
+      );
+      east_solution = AreaofRectanglefromXandRegion(sol_e, "SE");
+    } catch (error){
+      sol_e = undefined;
+      east_solution = 0;
+      console.error("east error");
+    }
+    if (east_solution === NaN){
+      east_solution =0 ;
+    }
+  }
+
+  if (west_solution !== 0 || east_solution !== 0) {
+    if (west_solution > east_solution) {
+      max_areaX = sol_w;
+      max_reg = "SW";
+    } else {
+      max_areaX = sol_e;
+      max_reg = "SE";
+    }
+    try{
+      res = AreaofRectanglefromXandRegion(max_areaX, max_reg, true);
+    } catch (error){
+      res = [0,[]];
+    }
+  } else {
+    res = [0, []];
+  }
   max_area = res[0];
   max_rectangle = res[1];
-  console.log("Max area is : ", max_area);
-  console.log("rectangle", max_rectangle);
+
   return [max_area, max_rectangle];
 }
 
@@ -620,39 +628,46 @@ function find_x_intersection(p1, p2, y) {
 }
 
 function launchAlgorithm() {
+  if (vertices.length === 0) {
+    return false;
+  }
   areaMax = 0;
   rectMax = [];
   computePossibleDirections();
   for (direction in possibleDirections) {
+    //console.log("rotation for direction", direction);
     rotatePoints(
       possibleDirections[direction][0],
       possibleDirections[direction][1],
       FIRST
     );
     rectangleAreaAndVertices = searchLargestRectangle();
+    //console.log("got rectangle");
     if (rectangleAreaAndVertices[0] > areaMax) {
-      console.log("better direction:", direction);
+      //console.log("for direction -better direction:", direction);
       rectMax = rectangleAreaAndVertices[1];
       areaMax = rectangleAreaAndVertices[0];
-      console.log(areaMax);
-      console.log(rectMax);
+      //console.log("for direction - areaMax", areaMax);
+      //console.log("for direction - rectMax", rectMax);
       rotatePoints(
-        possibleDirections[0][0],
-        possibleDirections[0][1],
-        -1,
+        possibleDirections[direction][0],
+        possibleDirections[direction][1],
+        BACK,
         rectMax
       );
+      //console.log("finished my rotation when better");
     } else {
-      console.log("no better direction:");
+      //console.log("no better direction:");
       rotatePoints(
         possibleDirections[direction][0],
         possibleDirections[direction][1],
         BACK
       );
+      //console.log("finished my rotation when no");
     }
   }
   array_r = rectMax;
-  console.log(array_r);
+  console.log("final : ", array_r);
 }
 
 // This Redraws the Canvas when resized

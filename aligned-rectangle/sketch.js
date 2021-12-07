@@ -395,34 +395,49 @@ function searchLargestRectangle() {
   x_min_e = Math.max(NE[NE.length - 1].x, SE[0].x);
   x_max_e = NE[0].x;
 
-  sol_w = BS_xMaxArea(
-    AreaofRectanglefromXandRegion,
-    SW,
-    "SW",
-    x_min_w,
-    x_max_w
-  );
-  
-  west_solution = AreaofRectanglefromXandRegion(sol_w, "SW");
-  
-
-  sol_e = BS_xMaxArea(
-    AreaofRectanglefromXandRegion,
-    SE,
-    "SE",
-    x_min_e,
-    x_max_e
-  );
-  east_solution = AreaofRectanglefromXandRegion(sol_e, "SE");
-
-  if (west_solution > east_solution) {
-    max_areaX = sol_w;
-    max_reg = "SW";
-  } else {
-    max_areaX = sol_e;
-    max_reg = "SE";
+  if(SW.length === 1 || NW.length === 1){
+    sol_w = undefined;
+    west_solution = 0;
   }
-  res = AreaofRectanglefromXandRegion(max_areaX, max_reg, true);
+  else{
+    sol_w = BS_xMaxArea(
+      AreaofRectanglefromXandRegion,
+      SW,
+      "SW",
+      x_min_w,
+      x_max_w
+    );
+    west_solution = AreaofRectanglefromXandRegion(sol_w, "SW");
+  }
+  
+  
+  if(SE.length === 1 || NE.length === 1){
+    sol_e = undefined;
+    east_solution = 0;
+  } else {
+    sol_e = BS_xMaxArea(
+      AreaofRectanglefromXandRegion,
+      SE,
+      "SE",
+      x_min_e,
+      x_max_e
+    );
+    east_solution = AreaofRectanglefromXandRegion(sol_e, "SE");
+  }
+  
+  if (west_solution !== 0 && east_solution !== 0){
+    if (west_solution > east_solution) {
+      max_areaX = sol_w;
+      max_reg = "SW";
+    } else {
+      max_areaX = sol_e;
+      max_reg = "SE";
+    }
+    res = AreaofRectanglefromXandRegion(max_areaX, max_reg, true);
+  }
+  else{
+    res = [0,[]]
+  }
   max_area = res[0];
   max_rectangle = res[1];
   array_r = max_rectangle;

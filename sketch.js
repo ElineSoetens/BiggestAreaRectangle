@@ -181,7 +181,7 @@ function computePossibleDirections() {
 
 function createPointsInsidePolygon() {
   U = U.concat(generateRandomPointsInside(NRPOINTS)); //todo: see what's the problem
-  V = V.concat(generateRandomPointsInside(1 / EPSILON));
+  V = V.concat(generateRandomPointsInside(NRPOINTS / EPSILON));
 }
 
 function generateRandomPointsInside(numberOfPointsNeeded) {

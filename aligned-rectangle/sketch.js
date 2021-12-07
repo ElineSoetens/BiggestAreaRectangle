@@ -384,10 +384,7 @@ function searchLargestRectangle() {
   }
   NW.push(points[i_minX % l_points]);
 
-  console.log("region- SW",SW);
-  console.log("region- NW",NW);
-  console.log("region- SE",SE);
-  console.log("region- NE",NE);
+  
   
   //For SW
   x_min_w = SW[0].x;
@@ -396,6 +393,7 @@ function searchLargestRectangle() {
   x_max_e = NE[0].x;
 
   if(SW.length === 1 || NW.length === 1){
+    //console.log("dont do west")
     sol_w = undefined;
     west_solution = 0;
   }
@@ -412,6 +410,7 @@ function searchLargestRectangle() {
   
   
   if(SE.length === 1 || NE.length === 1){
+    //console.log("dont do east")
     sol_e = undefined;
     east_solution = 0;
   } else {
@@ -425,7 +424,8 @@ function searchLargestRectangle() {
     east_solution = AreaofRectanglefromXandRegion(sol_e, "SE");
   }
   
-  if (west_solution !== 0 && east_solution !== 0){
+  if (west_solution !== 0 || east_solution !== 0){
+    
     if (west_solution > east_solution) {
       max_areaX = sol_w;
       max_reg = "SW";
@@ -433,6 +433,7 @@ function searchLargestRectangle() {
       max_areaX = sol_e;
       max_reg = "SE";
     }
+    //console.log(max_reg)
     res = AreaofRectanglefromXandRegion(max_areaX, max_reg, true);
   }
   else{
@@ -444,7 +445,7 @@ function searchLargestRectangle() {
   return [max_area, max_rectangle];
 }
 
-function AreaofRectanglefromXandRegion(x, region, verbose = true) {
+function AreaofRectanglefromXandRegion(x, region, verbose = false) {
   //region should be one of the four name "SW","SE","NE","NW"
   if (region === "SW") {
     domaine = SW;

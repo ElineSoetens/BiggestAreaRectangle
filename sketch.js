@@ -17,7 +17,7 @@ var NW = [];
 var array_r = [];
 
 var NRPOINTS = 10;
-var EPSILON = 0.1; //TODO: if time, let the user choose
+var EPSILON = 0.1; 
 var U = [];
 var V = [];
 var possibleDirections = [];
@@ -32,16 +32,15 @@ function setup() {
   fill("black");
   textSize(40);
   button = createButton("Clear");
-  button.position(10, 35);
+  button.position(10, 85);
   button.mousePressed(resetpoints);
 
   button = createButton("I finished my polygon construction");
-  button.position(10, 55);
+  button.position(10, 110);
   button.mousePressed(convexhull);
 
-  //for the purpose of testing, I always check the first drawed edge of the polygon
   button = createButton("Find the largest rectangle");
-  button.position(10, 75);
+  button.position(10, 135);
   button.mousePressed(launchAlgorithm);
 }
 

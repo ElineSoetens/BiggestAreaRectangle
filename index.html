@@ -20,6 +20,36 @@
         </ul>
     </nav>
 </header>
+<section>
+    <h1>Find largest rectangle</h1>
+    <p>Here is the complete algorithm which search for the largest inscribed rectangle in a convex polygon. See the steps below :</p>
+    <ol>1. Click on the screen to make points appear. Draw at least 3 points if you want to see something. The points do not have to be aligned or anything.</ol>
+    <ol>2. Click on "I finished my polygon construction" to launch the convex hull algorithm. It is a pre-treatment such that we have the biggest convex polygon created by your points.</ol>
+    <ol>3. You can create new points and enlarge your polygon by asking for the new convex hull.</ol>
+    <ol>4. Click on "Find the largest rectangle" to launch the algorithm which will compute the largest rectangle possible. It will be drawn in green.</ol>
+
+    <h1>Find epsilon-directions</h1>
+    <p>Here is a part of the main algorithm : create epsilon-directions. However, the point of this implementation is to convince you that if we 
+        draw enough random directions, we will have at least one of them close enough to the real direction of the rectangle we are looking for.
+        Therefore, we start with the searched rectangle and show that the ratio determines how many points we take for the sets U and V,
+        but also the length of the segment f1 f2.   </p>
+    <ol>0. The expected rectangle is drawn. One of the green dots is the center s, the others (on the upper edge) are the points f1 and f2. They appear
+        at first, even though you dit not choose a ratio yet, because the ratio is initially set to 1-5. </ol>    
+    <ol>1. Choose a ratio by clicking on the buttons (1-1, 1-3, 1-5 or 1-10). This ratio determines how many points we will drawn for the U and V sets.
+        NB: once you chose a ratio, you can not change it except by clearing.
+    </ol>
+    <ol>2. Click "Generate points" to compute random points to populate the sets U and V. U points are in red and V points in blue.</ol>    
+    <ol>3. Click on "Show best directions" to launch the algorithm which checks if some paire u-v create epsilon-directions. If there exist any,
+        they will appear in green, linking the red point u to the adequate blue v point. 
+    </ol>
+    <ol>4. Without clearing, you can always ask to generate new points and re-launch the verification of epsilon-directions.</ol>
+
+    <h1>Find largest axis-aligned rectangle</h1>
+    <p>Here is a part of the main algorithm :  finding the largest axis-aligned rectangle. The steps are exactly the same as for 
+        "Find largest rectangle", the only difference is the fact that the rectangle must have parallel edges to the axe x. It is easier
+        to implement but gives far worse results (the rectangle will not be as big as it could have been).
+    </p>
+    </section>
 
 </body>
 </html>
